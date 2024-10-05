@@ -1,0 +1,23 @@
+
+
+Common issues when trying to transfer data over TCP:
+    sock_stream creates a tcp connection. When sending long or large amounts of data it may not know where the
+    end of the data is.
+        Once data gets to the server, in our current settings 1024 bytes is the end, but if there is data it is "left behind"
+    TCP stream based protocol, not message based
+
+Solution:
+    make sure message is well-defined
+    implement a protocol that send and receive methods conform to
+        send size of message as a header
+        append an end-of-message mark to end each message
+    serialize the message
+        Serialization
+            message is well-defined, receiver knows message is incomplete
+            can be used to transfer objects (lists, dicts, etc)
+            Client converts object to stream of well-defined bytes and puts that on tcp stream
+            server converts well-defined stream of bytes back into an object
+        Implementation
+            Json or Pickle
+
+
