@@ -21,3 +21,10 @@ Solution:
             Json or Pickle
 
 
+File Downloading
+    A file is a series of characters
+    To transfer a file we need to:
+        read the file
+        send the sequence of characters
+        Create a new empty file at the destination
+        Store the transferred sequence of characters in the new file
