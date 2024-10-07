@@ -28,3 +28,12 @@ File Downloading
         send the sequence of characters
         Create a new empty file at the destination
         Store the transferred sequence of characters in the new file
+
+
+File Uploading
+    Read the file as a sequence of characters
+    send the sequence of characters
+    create a new empty file at destination
+    store the transferred sequence of characters
+    Read with listener, write with backdoor
+

